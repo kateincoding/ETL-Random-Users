@@ -53,23 +53,11 @@ CREATE TABLE location (
     coord_longitude DOUBLE PRECISION,
     timezone_offset VARCHAR(7),
     timezone_description VARCHAR,
+	country VARCHAR,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_user_location FOREIGN KEY (user_id)
         REFERENCES users(id) ON DELETE CASCADE
-);
-
--- ========================
--- TABLE: country
--- ========================
-CREATE TABLE country (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    location_id UUID NOT NULL,
-    name VARCHAR,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_location_country FOREIGN KEY (location_id)
-        REFERENCES location(id) ON DELETE CASCADE
 );
 
 -- ========================

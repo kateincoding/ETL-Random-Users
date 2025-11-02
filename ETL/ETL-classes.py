@@ -108,7 +108,6 @@ class Transformer:
 # ===============================
 class Loader(ETLBase):
     def load(self, data):
-        """Inserta los datos transformados en PostgreSQL"""
         print("💾 Cargando datos en la base de datos...")
 
         conn = self.connect_db()
@@ -117,6 +116,7 @@ class Loader(ETLBase):
             return
 
         cur = conn.cursor()
+
         for u in data:
             try:
                 # Insertar en users
@@ -129,43 +129,57 @@ class Loader(ETLBase):
                     u['gender'], u['email'], u['dob'], u['nat'], u['phone'], u['cell']
                 ))
 
-                # Insertar en location
+                # 🔹 Guardar user_id directamente del usuario actual
+                user_id = u['uuid']
+
+                # ==========================
+                # COUNTRY
+                # ==========================
+                cur.execute("SELECT id FROM country WHERE name = %s;", (u['country'],))
+                result = cur.fetchone()
+
+                if result:
+                    country_id = result[0]
+                else:
+                    # Inserta el país y obtiene su ID
+                    cur.execute("""
+                        INSERT INTO country (id, name)
+                        VALUES (uuid_generate_v4(), %s)
+                        RETURNING id;
+                    """, (u['country'],))
+                    country_id = cur.fetchone()[0]
+                    print(f"✅ País '{u['country']}' insertado con id {country_id}")
+
+                # ==========================
+                # LOCATION
+                # ==========================
                 cur.execute("""
-                    INSERT INTO location (id, user_id, state, city, sreet_number, street_name, postcode,
-                                          coord_latitude, coord_longitude, timezone_offset, timezone_description)
-                    VALUES (uuid_generate_v4(), %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
+                    INSERT INTO location (
+                        id, country_id, user_id, state, city, street_number, street_name, postcode,
+                        coord_latitude, coord_longitude, timezone_offset, timezone_description
+                    )
+                    VALUES (uuid_generate_v4(), %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
                 """, (
-                    u['uuid'], u['state'], u['city'], u['street_number'],
+                    country_id, user_id, u['state'], u['city'], u['street_number'],
                     u['street_name'], u['postcode'], u['latitude'], u['longitude'],
                     u['timezone_offset'], u['timezone_description']
                 ))
 
-                # Insertar en country (verificar si existe primero)
-                cur.execute("SELECT id FROM country WHERE name = %s;", (u['country'],))
-                country_result = cur.fetchone()
-                
-                if not country_result:
-                    cur.execute("""
-                        INSERT INTO country (id, location_id, name)
-                        VALUES (uuid_generate_v4(), %s, %s) RETURNING id;
-                    """, (u['uuid'], u['country']))
-                    country_id = cur.fetchone()[0]
-                    print(f"✅ País '{u['country']}' insertado")
-                else:
-                    country_id = country_result[0]
-                    print(f"ℹ️ País '{u['country']}' ya existe")
-
-                # Insertar en DNI
+                # ==========================
+                # DNI
+                # ==========================
                 cur.execute("""
                     INSERT INTO dni (id, user_id, name, value)
                     VALUES (uuid_generate_v4(), %s, %s, %s);
-                """, (u['uuid'], u['dni_name'], u['dni_value']))
+                """, (user_id, u['dni_name'], u['dni_value']))
 
-                # Insertar en registers
+                # ==========================
+                # REGISTERS
+                # ==========================
                 cur.execute("""
                     INSERT INTO registers (id, user_id, date, age)
                     VALUES (uuid_generate_v4(), %s, CURRENT_TIMESTAMP, %s);
-                """, (u['uuid'], str(u['age'])))
+                """, (user_id, u['age']))
 
             except Exception as e:
                 print(f"⚠️ Error insertando usuario {u['uuid']}: {e}")
@@ -176,6 +190,7 @@ class Loader(ETLBase):
         cur.close()
         conn.close()
         print("✅ Datos cargados correctamente en PostgreSQL.")
+
 
 
 # ===============================

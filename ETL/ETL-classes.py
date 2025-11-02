@@ -140,11 +140,20 @@ class Loader(ETLBase):
                     u['timezone_offset'], u['timezone_description']
                 ))
 
-                # Insertar en country
-                cur.execute("""
-                    INSERT INTO country (id, location_id, name)
-                    VALUES (uuid_generate_v4(), %s, %s);
-                """, (u['uuid'], u['country']))
+                # Insertar en country (verificar si existe primero)
+                cur.execute("SELECT id FROM country WHERE name = %s;", (u['country'],))
+                country_result = cur.fetchone()
+                
+                if not country_result:
+                    cur.execute("""
+                        INSERT INTO country (id, location_id, name)
+                        VALUES (uuid_generate_v4(), %s, %s) RETURNING id;
+                    """, (u['uuid'], u['country']))
+                    country_id = cur.fetchone()[0]
+                    print(f"✅ País '{u['country']}' insertado")
+                else:
+                    country_id = country_result[0]
+                    print(f"ℹ️ País '{u['country']}' ya existe")
 
                 # Insertar en DNI
                 cur.execute("""

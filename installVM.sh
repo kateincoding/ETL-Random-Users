@@ -58,6 +58,17 @@ psql --version
 python3 --version
 pip list | grep psycopg2
 
+# 9. Crear tablas en la base de datos
+echo "🛠️ Creando tablas en la base de datos..."
+SQL_FILE="./database/create_tables.sql"
+if [ -f "$SQL_FILE" ]; then
+  echo "📄 Ejecutando script SQL ($SQL_FILE)..."
+  sudo -u postgres psql -d user_management -f "$SQL_FILE"
+  echo "✅ Tablas creadas correctamente."
+else
+  echo "⚠️ No se encontró $SQL_FILE en $(pwd)"
+fi
+
 # 9️. Mensaje final
 echo "✅ Instalación completada con éxito."
 echo "-------------------------------------"

@@ -7,6 +7,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- ENUMS
 -- ========================
 CREATE TYPE gender_type AS ENUM ('male', 'female', 'other', 'prefer_not_to_say');
+CREATE TYPE generation_type AS ENUM ('alpha' , 'z', 'millennial' , 'x', 'baby_boomer', 'silent');
 
 -- ========================
 -- TABLE: users
@@ -19,6 +20,7 @@ CREATE TABLE users (
     gender gender_type,
     email VARCHAR UNIQUE,
     dob TIMESTAMP,
+    generation generation_type,
     nat VARCHAR,
     phone VARCHAR(20),
     cell VARCHAR(20),

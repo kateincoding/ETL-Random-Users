@@ -69,11 +69,29 @@ class Extractor(ETLBase):
 # CLASE TRANSFORMADOR
 # ===============================
 class Transformer:
+    def get_generation(self, age):
+        """Determina la generación según la edad."""
+        if age < 12:
+            return "alpha"
+        elif age < 31:
+            return "z"
+        elif age < 44:
+            return "millennial"
+        elif age < 60:
+            return "x"
+        elif age < 80:
+            return "baby_boomer"
+        else:
+            return "silent"
+
     def transform(self, raw_data):
         """Transforma los datos de la API"""
         print("🔄 Transformando datos...")
         transformed = []
         for u in raw_data:
+            age = u['dob']['age']
+            generation = self.get_generation(age)
+
             transformed.append({
                 'uuid': u['login']['uuid'],
                 'title': u['name']['title'],
@@ -82,6 +100,7 @@ class Transformer:
                 'gender': u['gender'],
                 'email': u['email'],
                 'dob': u['dob']['date'],
+                'generation': generation,
                 'nat': u['nat'],
                 'phone': u['phone'],
                 'cell': u['cell'],
@@ -97,7 +116,7 @@ class Transformer:
                 'dni_name': u['id']['name'],
                 'dni_value': u['id']['value'],
                 'country': u['location']['country'],
-                'age': u['dob']['age'],
+                'age': age,
             })
         print(f"✅ {len(transformed)} usuarios transformados correctamente.")
         return transformed
@@ -119,17 +138,19 @@ class Loader(ETLBase):
 
         for u in data:
             try:
-                # Insertar en users
+                # ==========================
+                # USERS
+                # ==========================
                 cur.execute("""
-                    INSERT INTO users (id, title, first_name, last_name, gender, email, dob, nat, phone, cell)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    INSERT INTO users (id, title, first_name, last_name, gender, email, dob, generation, nat, phone, cell)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                     ON CONFLICT (id) DO NOTHING;
                 """, (
                     u['uuid'], u['title'], u['first_name'], u['last_name'],
-                    u['gender'], u['email'], u['dob'], u['nat'], u['phone'], u['cell']
+                    u['gender'], u['email'], u['dob'], u['generation'],  # 👈 generación agregada
+                    u['nat'], u['phone'], u['cell']
                 ))
 
-                # 🔹 Guardar user_id directamente del usuario actual
                 user_id = u['uuid']
 
                 # ==========================
@@ -141,7 +162,6 @@ class Loader(ETLBase):
                 if result:
                     country_id = result[0]
                 else:
-                    # Inserta el país y obtiene su ID
                     cur.execute("""
                         INSERT INTO country (id, name)
                         VALUES (uuid_generate_v4(), %s)
@@ -192,7 +212,6 @@ class Loader(ETLBase):
         print("✅ Datos cargados correctamente en PostgreSQL.")
 
 
-
 # ===============================
 # CLASE PRINCIPAL (PIPELINE)
 # ===============================
@@ -217,4 +236,3 @@ if __name__ == "__main__":
     num_users = int(input("¿Cuántos usuarios quieres obtener? "))
     pipeline = ETLPipeline(DB_CONFIG)
     pipeline.run(num_users)
-    

@@ -28,9 +28,6 @@ def get_db_config_from_user():
     host = "localhost"
     port = "5432"
 
-    print("user", user)
-    print("password", password)
-
     return {
         'dbname': 'user_management',
         'user': user,

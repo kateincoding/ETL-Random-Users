@@ -1,7 +1,10 @@
+#!/usr/bin/env python3
+
 import requests
 import json
 import psycopg2
 from datetime import datetime
+import getpass
 
 # ===============================
 # CONFIGURACIÓN DE CONEXIÓN
@@ -13,6 +16,37 @@ DB_CONFIG = {
     'host': 'localhost',
     'port': '5432'
 }
+
+# ===============================
+# CONFIGURACIÓN DE CONEXIÓN
+# ===============================
+def get_db_config_from_user():
+    """Pide credenciales al usuario"""
+    dbname = 'user_management',
+    user = input("Usuario de PostgreSQL: ")
+    password = getpass.getpass("Contraseña: ")
+    host = "localhost"
+    port = "5432"
+
+    print("user", user)
+    print("password", password)
+
+    # return {
+    #     'dbname': dbname,
+    #     'user': user,
+    #     'password': password,
+    #     'host': host,
+    #     'port': port
+    # }
+
+    return {
+        'dbname': 'user_management',
+        'user': 'postgres',
+        'password': 'tu_password',
+        'host': 'localhost',
+        'port': '5432'
+    }
+
 
 
 # ===============================
@@ -138,9 +172,21 @@ class Loader(ETLBase):
 
         for u in data:
             try:
-                # ==========================
-                # USERS
-                # ==========================
+
+                # VERIFY IF THERE ARE DUPLCIATE USERS
+                cur.execute("SELECT value FROM dni WHERE value = %s;", (u['dni_value'],))
+                dni_value_result = cur.fetchone()
+                if dni_value_result:
+                    dni_name_result = cur.execute("SELECT name FROM dni WHERE name = %s;", (u['dni_name'],))
+                    if dni_name_result:
+                        continue
+
+                cur.execute("SELECT email FROM users WHERE email = %s;", (u['email'],))
+                result = cur.fetchone()
+                if result:
+                    continue
+                
+                # CREATE USERS
                 cur.execute("""
                     INSERT INTO users (id, title, first_name, last_name, gender, email, dob, generation, nat, phone, cell)
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
@@ -184,6 +230,8 @@ class Loader(ETLBase):
                     u['street_name'], u['postcode'], u['latitude'], u['longitude'],
                     u['timezone_offset'], u['timezone_description']
                 ))
+                # location_id = cur.fetchone()[0]
+                # print(f"Ubicación {location_id} para country {country_id} usuario {user_id} insertada.")
 
                 # ==========================
                 # DNI
@@ -233,6 +281,7 @@ class ETLPipeline:
 # MAIN
 # ===============================
 if __name__ == "__main__":
+    db_config = get_db_config_from_user()
     num_users = int(input("¿Cuántos usuarios quieres obtener? "))
-    pipeline = ETLPipeline(DB_CONFIG)
+    pipeline = ETLPipeline(db_config)
     pipeline.run(num_users)

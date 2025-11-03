@@ -5,7 +5,7 @@
 # ===============================================
 
 set -e  # Detiene el script si hay algún error
-
+sudo apt install python3
 echo "🚀 Iniciando instalación del entorno ETL..."
 
 # 1️. Actualizar el sistema

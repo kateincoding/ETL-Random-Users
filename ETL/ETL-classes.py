@@ -31,18 +31,10 @@ def get_db_config_from_user():
     print("user", user)
     print("password", password)
 
-    # return {
-    #     'dbname': dbname,
-    #     'user': user,
-    #     'password': password,
-    #     'host': host,
-    #     'port': port
-    # }
-
     return {
         'dbname': 'user_management',
-        'user': 'postgres',
-        'password': 'tu_password',
+        'user': user,
+        'password': password,
         'host': 'localhost',
         'port': '5432'
     }

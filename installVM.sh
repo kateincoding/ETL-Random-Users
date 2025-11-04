@@ -32,6 +32,7 @@ source venv/bin/activate
 echo "📚 Instalando librerías Python..."
 pip install --upgrade pip
 pip install requests psycopg2-binary
+sudo apt install libpq-dev python3-psycopg2
 
 # 6️. Instalar PostgreSQL y extensión UUID
 echo "🐘 Instalando PostgreSQL..."

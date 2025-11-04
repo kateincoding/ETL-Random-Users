@@ -19,6 +19,7 @@ pip install -r requirements.txt
 sudo -i -u postgres
 psql
 \i ./database/create-tables.sql
+```
 
 ## ETL
 ```bash

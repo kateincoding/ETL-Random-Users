@@ -6,16 +6,6 @@ import psycopg2
 from datetime import datetime
 import getpass
 
-# ===============================
-# CONFIGURACIÓN DE CONEXIÓN
-# ===============================
-DB_CONFIG = {
-    'dbname': 'user_management',
-    'user': 'postgres',
-    'password': 'tu_password',
-    'host': 'localhost',
-    'port': '5432'
-}
 
 # ===============================
 # CONFIGURACIÓN DE CONEXIÓN

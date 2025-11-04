@@ -10,8 +10,17 @@ ETL básico en Python que extrae datos de la API Random User, los transforma y l
 ```bash
 pip install -r requirements.txt
 ```
+```bash
+./installVM.sh
+```
 
-## Uso
+## Base de datos
+```bash
+sudo -i -u postgres
+psql
+\i ./database/create-tables.sql
+
+## ETL
 ```bash
 python ETL-script.py
 ```

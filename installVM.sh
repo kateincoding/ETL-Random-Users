@@ -47,7 +47,7 @@ sudo -u postgres psql -tc "SELECT 1 FROM pg_roles WHERE rolname='postgres';" | g
 sudo -u postgres psql -tc "SELECT 1 FROM pg_database WHERE datname='user_management';" | grep -q 1 || sudo -u postgres createdb user_management -O postgres
 
 # Cambiar contraseña del usuario postgres
-sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD 'tu_password';"
+sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD '1234';"
 
 # Activar extensión de UUID
 sudo -u postgres psql -d user_management -c "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";"
@@ -75,7 +75,7 @@ echo "-------------------------------------"
 echo "📂 Proyecto ETL en: ~/etl_project"
 echo "💾 Base de datos: user_management"
 echo "👤 Usuario PostgreSQL: postgres"
-echo "🔑 Password: tu_password"
+echo "🔑 Password: 1234"
 echo "-------------------------------------"
 echo "Ahora puedes ejecutar tu script ETL con:"
 echo "  source ~/etl_project/venv/bin/activate"

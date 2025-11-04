@@ -56,6 +56,7 @@ sudo -u postgres psql -d user_management -c "CREATE EXTENSION IF NOT EXISTS \"uu
 echo "🔍 Verificando instalación..."
 psql --version
 python3 --version
+sudo apt install libpq-dev python3-dev
 pip list | grep psycopg2
 
 # 9. Crear tablas en la base de datos
@@ -80,3 +81,5 @@ echo "-------------------------------------"
 echo "Ahora puedes ejecutar tu script ETL con:"
 echo "  source ~/etl_project/venv/bin/activate"
 echo "  python3 tu_script_etl.py"
+
+sudo systemctl status postgresql

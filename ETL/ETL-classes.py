@@ -69,11 +69,12 @@ class Extractor(ETLBase):
                 response = requests.get(url, params={'results': remainder})
                 results.extend(response.json()['results'])
 
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"temporary_raw_data_{timestamp}.json"
-        with open(filename, "w", encoding="utf-8") as f:
-            json.dump(results, f, indent=2, ensure_ascii=False)
-        print(f"✅ Datos extraídos y guardados en {filename}")
+        # necesario para debuggear y ver los datos extraídos
+        #  timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        # filename = f"temporary_raw_data_{timestamp}.json"
+        # with open(filename, "w", encoding="utf-8") as f:
+        #     json.dump(results, f, indent=2, ensure_ascii=False)
+        # print(f"✅ Datos extraídos y guardados en {filename}")
 
         return results
 
@@ -82,17 +83,20 @@ class Extractor(ETLBase):
 # CLASE TRANSFORMADOR
 # ===============================
 class Transformer:
-    def get_generation(self, age):
-        """Determina la generación según la edad."""
-        if age < 12:
+    def get_generation(self, year):
+        """Determina la generación según el año de nacimiento"""
+        if not year > 0:
+            return "unknown"
+
+        if year > 2012:
             return "alpha"
-        elif age < 31:
+        elif year >= 1997 and year <= 2012:
             return "z"
-        elif age < 44:
+        elif year >= 1981 and year <= 1996:
             return "millennial"
-        elif age < 60:
+        elif year >= 1965 and year <= 1980:
             return "x"
-        elif age < 80:
+        elif year >= 1946 and year <= 1964:
             return "baby_boomer"
         else:
             return "silent"
@@ -103,7 +107,11 @@ class Transformer:
         transformed = []
         for u in raw_data:
             age = u['dob']['age']
-            generation = self.get_generation(age)
+            dob_year = int(u['dob']['date'][:4])
+            generation = self.get_generation(dob_year)
+            if generation == "unknown": 
+                print(f"⚠️ Año de nacimiento inválido ({dob_year}) para usuario {u['login']['uuid']}")
+                continue
 
             transformed.append({
                 'uuid': u['login']['uuid'],
@@ -152,17 +160,19 @@ class Loader(ETLBase):
         for u in data:
             try:
 
-                # VERIFY IF THERE ARE DUPLCIATE USERS
+                # VERIFY IF THERE ARE DUPLICATE USERS
                 cur.execute("SELECT value FROM dni WHERE value = %s;", (u['dni_value'],))
                 dni_value_result = cur.fetchone()
                 if dni_value_result:
                     dni_name_result = cur.execute("SELECT name FROM dni WHERE name = %s;", (u['dni_name'],))
                     if dni_name_result:
+                        print("DNI value and name already exist, skipping user.")
                         continue
 
                 cur.execute("SELECT email FROM users WHERE email = %s;", (u['email'],))
                 result = cur.fetchone()
                 if result:
+                    print("Email existe, pasamos al siguiente usuario.")
                     continue
                 
                 # CREATE USERS
@@ -184,15 +194,15 @@ class Loader(ETLBase):
                 cur.execute("SELECT id FROM country WHERE name = %s;", (u['country'],))
                 result = cur.fetchone()
 
-                if result:
+                if result: #aqui nos damos cuenta que el pais ya existe
                     country_id = result[0]
-                else:
+                else: #si no existe, lo insertamos
                     cur.execute("""
                         INSERT INTO country (id, name)
                         VALUES (uuid_generate_v4(), %s)
                         RETURNING id;
                     """, (u['country'],))
-                    country_id = cur.fetchone()[0]
+                    country_id = cur.fetchone()[0] #variable que conservamos para colocar en location
                     print(f"✅ País '{u['country']}' insertado con id {country_id}")
 
                 # ==========================
@@ -209,8 +219,6 @@ class Loader(ETLBase):
                     u['street_name'], u['postcode'], u['latitude'], u['longitude'],
                     u['timezone_offset'], u['timezone_description']
                 ))
-                # location_id = cur.fetchone()[0]
-                # print(f"Ubicación {location_id} para country {country_id} usuario {user_id} insertada.")
 
                 # ==========================
                 # DNI

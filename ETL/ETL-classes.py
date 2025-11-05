@@ -84,7 +84,10 @@ class Extractor(ETLBase):
 # ===============================
 class Transformer:
     def get_generation(self, year):
-        """Determina la generación según la edad."""
+        """Determina la generación según el año de nacimiento"""
+        if not year > 0:
+            return "unknown"
+
         if year > 2012:
             return "alpha"
         elif year >= 1997 and year <= 2012:
@@ -106,6 +109,9 @@ class Transformer:
             age = u['dob']['age']
             dob_year = int(u['dob']['date'][:4])
             generation = self.get_generation(dob_year)
+            if generation == "unknown": 
+                print(f"⚠️ Año de nacimiento inválido ({dob_year}) para usuario {u['login']['uuid']}")
+                continue
 
             transformed.append({
                 'uuid': u['login']['uuid'],
